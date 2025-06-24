@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Чат-бот</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .chat-box {
+            width: 100%;
+            max-width: 700px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+        }
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+            margin-bottom: 15px;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 80%;
+            clear: both;
+        }
+        .user {
+            background: #e1f5fe;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        .assistant {
+            background: #e8f5e9;
+            align-self: flex-start;
+            margin-right: auto;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        input[type=text], input[type=file] {
+            flex: 1;
+            padding: 10px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-box">
+        <h2>Чат с ИИ</h2>
+        <div id="messages"></div>
+        <div class="input-group">
+            <input id="user-input" type="text" placeholder="Введите сообщение...">
+            <button onclick="sendMessage()">Отправить</button>
+            <button onclick="clearHistory()">Очистить</button>
+        </div>
+        <div class="input-group">
+            <input type="file" id="fileInput">
+            <button onclick="uploadFile()">Загрузить файл</button>
+        </div>
+    </div>
+    <script>
+        function renderMessage(role, text) {
+            const msg = document.createElement('div');
+            msg.className = 'message ' + role;
+            msg.innerText = text;
+            document.getElementById('messages').appendChild(msg);
+            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('user-input');
+            const text = input.value.trim();
+            if (!text) return;
+            renderMessage('user', text);
+            input.value = '';
+
+            fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text })
+            })
+            .then(res => res.json())
+            .then(data => renderMessage('assistant', data.response));
+        }
+
+        function clearHistory() {
+            fetch('/clear', { method: 'POST' })
+                .then(() => document.getElementById('messages').innerHTML = '');
+        }
+
+        function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => alert(data.status));
+        }
+    </script>
+</body>
+</html>
+
+
